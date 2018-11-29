@@ -2,8 +2,15 @@ import tkinter as tk
 import tkinter.simpledialog as sdg
 import tkinter.messagebox as mbx
 import tkinter.font as tkf
+import tkinter.filedialog as fdg
 import random as rnd
+import platform as pt
 import time
+
+if pt.system() == "Linux":
+	id = "~"
+elif pt.system() == "Windows":
+	id = "C:\\"
 
 base = tk.Tk()
 base.title("Charlie Cook's Visual Sorting Demo")
@@ -24,7 +31,7 @@ fontName = tkf.Font(family = "Consolas", size = 16, weight = "bold")
 frameTimes = tk.LabelFrame(base, text = "Clocked Times", bd = 4, relief = "raised", font = fontTitle)
 frameTimes.grid(row = 0, column = 0, padx = 4, pady = 4, sticky = "n")
 
-listboxTimes = tk.Listbox(frameTimes, width = 30, height = 12,  font = fontNormal)
+listboxTimes = tk.Listbox(frameTimes, width = 30, height = 10,  font = fontNormal)
 listboxTimes.grid(row = 0, column = 0)
 
 scrollVTimes = tk.Scrollbar(frameTimes, orient = "vertical", command = listboxTimes.yview)
@@ -35,9 +42,23 @@ scrollHTimes.grid(row = 1, column = 0, columnspan = 2, sticky = "we")
 
 def clockTime(start, end, algo):
 	listboxTimes.insert("end", algo + ": " + str(round(end - start, 4)) + " sec (E=" + \
-		str(elements.get()) + "; D=" + str(sleepTime.get() + sleepTimeFine.get()) + \
+		str(elements.get()) + "; D=" + str(sleepTime.get() + sleepTimeFine.get() / 1000) + \
 		" sec)" \
 	)
+
+def saveTimes():
+	savefile = fdg.asksaveasfilename(parent = base, title = "Select or Enter a file to save to:", initialdir = id, filetypes = (("Text Files","*.txt"),("All Files","*.*")))
+
+	if type(savefile) is str and len(savefile) > 0:
+		file = open(savefile, "w")
+
+		for clock in listboxTimes.get(0, "end"):
+			file.write(clock + "\n")
+
+		file.close()
+
+buttonSaveTimes = tk.Button(frameTimes, text = "Save Times to File", bd = 2, command = saveTimes, font = fontNormal)
+buttonSaveTimes.grid(row = 2, column = 0, columnspan = 2, padx = 2, pady = 2)
 
 frameControls = tk.LabelFrame(base, text = "Sorting Controls", bd = 4, relief = "raised", font = fontTitle)
 frameControls.grid(row = 0, column = 1, padx = 4, pady = 4)
@@ -249,7 +270,7 @@ def mergeInPlace(baseLeft, lengthLeft, baseRight, lengthRight):
 		j = baseLeft + lengthLeft - 1
 
 		while j > baseLeft and elementHeights[j - 1] > elementHeights[i]:
-			swap(j, j - 1, doDelay = False)
+			swap(j, j - 1, doDelay = True)
 			j -= 1
 
 		if elementHeights[j] > elementHeights[i]:
@@ -261,6 +282,9 @@ def mergeSort(base, length, mergeFunc = merge):
 	elementColorCoding["sortedSide"] = "left"
 	elementColorCoding["sortedBorder"] = -1
 
+	if length == elements.get():
+		start = time.time()
+
 	if length > 1:
 		lengthLeft = length // 2
 		lengthRight = length - lengthLeft
@@ -271,6 +295,8 @@ def mergeSort(base, length, mergeFunc = merge):
 		mergeSort(baseRight, lengthRight, mergeFunc)
 
 		mergeFunc(baseLeft, lengthLeft, baseRight, lengthRight)
+		if length == elements.get():
+			clockTime(start, time.time(), "MGON" if mergeFunc == merge else "MGIP")
 
 #TODO: Quick & Bogo Sort.
 
@@ -312,6 +338,7 @@ def bogoSort():
 		mbx.showinfo("Notice", "Only the fine time delay will be used in this sorting run.")
 
 	sorted = False
+	start = time.time()
 	while not sorted:
 		rnd.shuffle(elementHeights)
 		updateElements(0)
@@ -325,6 +352,7 @@ def bogoSort():
 
 		if not broke:
 			sorted = True
+	clockTime(start, time.time(), "BGO")
 
 def qsPartition(left, right):
 	elementColorCoding["indicated"] = right
@@ -346,10 +374,16 @@ def quickSort(left, right):
 	elementColorCoding["sortedSide"] = "left"
 	elementColorCoding["sortedBorder"] = left - 1
 
-	if left<right:
+	if left == 0 and right == elements.get() - 1:
+		start = time.time()
+
+	if left < right:
 		pivot = qsPartition(left, right)
 		quickSort(left, pivot - 1)
 		quickSort(pivot + 1, right)
+
+	if left == 0 and right == elements.get() - 1:
+		clockTime(start, time.time(), "QCK")
 
 buttonShuffle = tk.Button(frameControls, text = "Shuffle Elements", bd = 2, width = 20, command = shuffleElements, font = fontNormal)
 buttonReverse = tk.Button(frameControls, text = "Reverse Elements", bd = 2, width = 20, command = reverseElements, font = fontNormal)
