@@ -31,7 +31,7 @@ frameMain.grid(row = 1, column = 0, padx = 4, pady = 4)
 frameScreen = tk.Canvas(frameMain, width = 800, height = 400)
 frameScreen.pack(padx = 4, pady = 4)
 
-elementHeights = list(range(1, 21))
+elementHeights = list(range(1, 11))
 elementColorCoding = {"indicated": 0, "sortedBorder": -1, "sortedSide": "none"}
 
 def processColor(element):
@@ -59,6 +59,9 @@ def updateElements(strNewElements):
 		newElements = elements.get()
 	else:
 		elementHeights = list(range(1, newElements + 1))
+		elementColorCoding["indicated"] = -1
+		elementColorCoding["sortedBorder"] = -1
+		elementColorCoding["sortedSide"] = "none"
 
 	elWidthUnit = round(800 / newElements, 2)
 	elHeightUnit = round(400 / newElements, 2)
@@ -70,7 +73,7 @@ def updateElements(strNewElements):
 	frameScreen.update_idletasks()
 
 elements = tk.IntVar()
-scaleElements = tk.Scale(frameControls, label = "Sortable Elements", resolution = 20, from_ = 20, to = 800, length = 250, orient = "horizontal", variable = elements, command = updateElements, font = fontNormal)
+scaleElements = tk.Scale(frameControls, label = "Sortable Elements", resolution = 10, from_ = 10, to = 800, length = 250, orient = "horizontal", variable = elements, command = updateElements, font = fontNormal)
 scaleElements.grid(row = 0, column = 0, rowspan = 2, padx = 2, pady = 2)
 updateElements(0)
 
@@ -81,7 +84,7 @@ scaleSleepFine = tk.Scale(frameControls, label = "Fine Time Delay on Swap (ms)",
 scaleSleep.grid(row = 2, column = 0, rowspan = 2, padx = 2, pady = 2)
 scaleSleepFine.grid(row = 4, column = 0, rowspan = 2, padx = 2, pady = 2)
 
-def swap(elA, elB):
+def swap(elA, elB, doDelay = True):
 	if elA == elB:
 		return None
 
@@ -89,18 +92,31 @@ def swap(elA, elB):
 	elementHeights[elB] -= elementHeights[elA]
 	elementHeights[elB] *= -1
 	elementHeights[elA] -= elementHeights[elB]
-	updateElements(0)
-	time.sleep(sleepTime.get() + sleepTimeFine.get() / 1000)
+	if doDelay:
+		updateElements(0)
+		time.sleep(sleepTime.get() + sleepTimeFine.get() / 1000)
 
 def shuffleElements():
 	rnd.shuffle(elementHeights)
-	elementColorCoding["indicated"] = 0
+	elementColorCoding["indicated"] = -1
 	elementColorCoding["sortedBorder"] = -1
 	elementColorCoding["sortedSide"] = "none"
 	updateElements(0)
 
+def reverseElements():
+	elementColorCoding["indicated"] = -1
+	elementColorCoding["sortedBorder"] = -1
+	elementColorCoding["sortedSide"] = "none"
+
+	for i in range(len(elementHeights) // 2):
+		swap(i, elements.get() - (1 + i), doDelay = False)
+
+	updateElements(0)
+
 def bubbleSort():
 	elementColorCoding["sortedSide"] = "right"
+	elementColorCoding["sortedBorder"] = elements.get()
+
 	for i in range(elements.get() - 1):
 		swaps = 0
 
@@ -110,12 +126,15 @@ def bubbleSort():
 				swap(j, j + 1)
 				swaps += 1
 
-		elementColorCoding["sortedBorder"] = j
+		elementColorCoding["sortedBorder"] = j + 1
 
 		if swaps == 0:
 			break
 
 def insertionSort():
+	elementColorCoding["sortedSide"] = "left"
+	elementColorCoding["sortedBorder"] = -1
+
 	for i in range(1, elements.get()):
 		j = i - 1
 		while j >= 0 and elementHeights[j] > elementHeights[j + 1]:
@@ -123,7 +142,12 @@ def insertionSort():
 			swap(j + 1, j)
 			j -= 1;
 
+		elementColorCoding["sortedBorder"] = i + 1
+
 def selectionSort():
+	elementColorCoding["sortedSide"] = "left"
+	elementColorCoding["sortedBorder"] = -1
+
 	def minIndex(firstIndex):
 		min = firstIndex
 
@@ -141,6 +165,8 @@ def selectionSort():
 			swap(m, m - 1)
 			m -= 1
 
+		elementColorCoding["sortedBorder"] = i - 1
+
 def merge(baseLeft, lengthLeft, baseRight, lengthRight):
 	localArray = elementHeights[baseLeft : baseLeft + lengthLeft + lengthRight]
 	localLeft = 0
@@ -156,10 +182,15 @@ def merge(baseLeft, lengthLeft, baseRight, lengthRight):
 			elementHeights[k] = localArray[localRight]
 			localRight += 1
 
+		elementColorCoding["sortedBorder"] = k
+
 		updateElements(0)
 		time.sleep(sleepTime.get() + sleepTimeFine.get() / 1000)
 
 def mergeSort(base, length):
+	elementColorCoding["sortedSide"] = "left"
+	elementColorCoding["sortedBorder"] = -1
+
 	if length > 1:
 		lengthLeft = length // 2
 		lengthRight = length - lengthLeft
@@ -191,9 +222,12 @@ def buildHeap(length):
 		heapify(i, length)
 
 def heapSort():
+	elementColorCoding["sortedSide"] = "right"
+	elementColorCoding["sortedBorder"] = elements.get()
 	buildHeap(elements.get())
 
 	for i in range(elements.get() - 1, 0, -1):
+		elementColorCoding["sortedBorder"] = i
 		swap(0, i)
 		buildHeap(i)
 
@@ -232,15 +266,20 @@ def qsPartition(left, right):
 			i += 1
 
 	swap(i, right)
+	elementColorCoding["sortedBorder"] = i
 	return i
 
 def quickSort(left, right):
-    if left < right:
-        pivot = qsPartition(left, right)
-        quickSort(left, pivot - 1)
-        quickSort(pivot + 1, right)
+	elementColorCoding["sortedSide"] = "left"
+	elementColorCoding["sortedBorder"] = left - 1
+
+	if left<right:
+		pivot = qsPartition(left, right)
+		quickSort(left, pivot - 1)
+		quickSort(pivot + 1, right)
 
 buttonShuffle = tk.Button(frameControls, text = "Shuffle Elements", bd = 2, width = 16, command = shuffleElements, font = fontNormal)
+buttonReverse = tk.Button(frameControls, text = "Reverse Elements", bd = 2, width = 16, command = reverseElements, font = fontNormal)
 buttonBubble = tk.Button(frameControls, text = "Bubble Sort", bd = 2, width = 16, command = bubbleSort, font = fontNormal)
 buttonInsertion = tk.Button(frameControls, text = "Insertion Sort", bd = 2, width = 16, command = insertionSort, font = fontNormal)
 buttonSelection = tk.Button(frameControls, text = "Selection Sort", bd = 2, width = 16, command = selectionSort, font = fontNormal)
@@ -250,12 +289,17 @@ buttonQuick = tk.Button(frameControls, text = "Quick Sort", bd = 2, width = 16, 
 buttonBogo = tk.Button(frameControls, text = "Bogo Sort", bd = 2, width = 16, command = bogoSort, font = fontNormal)
 
 buttonShuffle.grid(row = 0, column = 1, padx = 2, pady = 2)
-buttonBubble.grid(row = 1, column = 1, padx = 2, pady = 2)
+buttonReverse.grid(row = 0, column = 2, padx = 2, pady = 2)
+
+buttonBogo.grid(row = 1, column = 1, padx = 2, pady = 2)
+buttonBubble.grid(row = 1, column = 2, padx = 2, pady = 2)
+
 buttonInsertion.grid(row = 2, column = 1, padx = 2, pady = 2)
-buttonSelection.grid(row = 3, column = 1, padx = 2, pady = 2)
-buttonMerge.grid(row = 4, column = 1, padx = 2, pady = 2)
-buttonHeap.grid(row = 5, column = 1, padx = 2, pady = 2)
-buttonQuick.grid(row = 6, column = 1, padx = 2, pady = 2)
-buttonBogo.grid(row = 7, column = 1, padx = 2, pady = 2)
+buttonSelection.grid(row = 2, column = 2, padx = 2, pady = 2)
+
+buttonMerge.grid(row = 3, column = 1, padx = 2, pady = 2)
+buttonHeap.grid(row = 3, column = 2, padx = 2, pady = 2)
+
+buttonQuick.grid(row = 4, column = 1, rowspan = 2, columnspan = 2, padx = 2, pady = 2)
 
 base.mainloop()
