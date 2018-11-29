@@ -70,8 +70,11 @@ scaleElements.grid(row = 0, column = 0, rowspan = 2, padx = 2, pady = 2)
 updateElements(0)
 
 sleepTime = tk.DoubleVar()
+sleepTimeFine = tk.DoubleVar()
 scaleSleep = tk.Scale(frameControls, label = "Time Delay on Swap (seconds)", resolution = 0.005, from_ = 0, to = 0.2, length = 250, orient = "horizontal", variable = sleepTime, font = fontNormal)
-scaleSleep.grid(row = 0, column = 1, rowspan = 2, padx = 2, pady = 2)
+scaleSleepFine = tk.Scale(frameControls, label = "Fine Time Delay on Swap (ms)", resolution = 0.1, from_ = 0, to = 4.9, length = 250, orient = "horizontal", variable = sleepTimeFine, font = fontNormal)
+scaleSleep.grid(row = 2, column = 0, rowspan = 2, padx = 2, pady = 2)
+scaleSleepFine.grid(row = 4, column = 0, rowspan = 2, padx = 2, pady = 2)
 
 def swap(elA, elB):
 	elementHeights[elA] += elementHeights[elB]
@@ -79,7 +82,7 @@ def swap(elA, elB):
 	elementHeights[elB] *= -1
 	elementHeights[elA] -= elementHeights[elB]
 	updateElements(0)
-	time.sleep(sleepTime.get())
+	time.sleep(sleepTime.get() + sleepTimeFine.get() / 1000)
 
 def shuffleElements():
 	rnd.shuffle(elementHeights)
@@ -140,7 +143,7 @@ def merge(baseLeft, lengthLeft, baseRight, lengthRight):
 			localRight += 1
 
 		updateElements(0)
-		time.sleep(sleepTime.get())
+		time.sleep(sleepTime.get() + sleepTimeFine.get() / 1000)
 
 def mergeSort(base, length):
 	if length > 1:
@@ -154,16 +157,68 @@ def mergeSort(base, length):
 
 		merge(baseLeft, lengthLeft, baseRight, lengthRight)
 
+#TODO: Quick & Bogo Sort.
+
+def heapify(head, heapSize):
+	left = 2 * head + 1
+	right = 2 * head + 2
+	largest = head
+
+	if (left < heapSize and elementHeights[left] > elementHeights[head]):
+		largest = left
+	if (right < heapSize and elementHeights[right] > elementHeights[largest]):
+		largest = right
+	if largest != head:
+		elementColorCoding["indicated"] = head
+		swap(largest, head)
+
+def buildHeap(length):
+	for i in range(length // 2, -1, -1):
+		heapify(i, length)
+
+def heapSort():
+	buildHeap(elements.get())
+
+	for i in range(elements.get() - 1, 0, -1):
+		swap(0, i)
+		buildHeap(i)
+
+def bogoSort():
+	if elements.get() > 10:
+		mbx.showwarning("Warning!", "Bogo Sort's time complextity is n-factorial. It cannot in good faith be run on a list larger than 10 elements.")
+		return None
+	else:
+		mbx.showinfo("Notice", "Only the fine time delay will be used in this sorting run.")
+
+	sorted = False
+	while not sorted:
+		rnd.shuffle(elementHeights)
+		updateElements(0)
+		time.sleep(sleepTimeFine.get() / 1000)
+
+		broke = False
+		for i in range(elements.get() - 1):
+			if elementHeights[i] > elementHeights[i + 1]:
+				broke = True
+				break
+
+		if not broke:
+			sorted = True
+
 buttonShuffle = tk.Button(frameControls, text = "Shuffle Elements", bd = 2, width = 16, command = shuffleElements, font = fontNormal)
 buttonBubble = tk.Button(frameControls, text = "Bubble Sort", bd = 2, width = 16, command = bubbleSort, font = fontNormal)
 buttonInsertion = tk.Button(frameControls, text = "Insertion Sort", bd = 2, width = 16, command = insertionSort, font = fontNormal)
 buttonSelection = tk.Button(frameControls, text = "Selection Sort", bd = 2, width = 16, command = selectionSort, font = fontNormal)
 buttonMerge = tk.Button(frameControls, text = "Merge Sort", bd = 2, width = 16, command = lambda: mergeSort(0, elements.get()), font = fontNormal)
+buttonHeap = tk.Button(frameControls, text = "Heap Sort", bd = 2, width = 16, command = heapSort, font = fontNormal)
+buttonBogo = tk.Button(frameControls, text = "Bogo Sort", bd = 2, width = 16, command = bogoSort, font = fontNormal)
 
-buttonShuffle.grid(row = 0, column = 2, padx = 2, pady = 2)
-buttonBubble.grid(row = 0, column = 3, padx = 2, pady = 2)
-buttonInsertion.grid(row = 1, column = 2, padx = 2, pady = 2)
-buttonSelection.grid(row = 1, column = 3, padx = 2, pady = 2)
-buttonMerge.grid(row = 0, column = 4, padx = 2, pady = 2)
+buttonShuffle.grid(row = 0, column = 1, padx = 2, pady = 2)
+buttonBubble.grid(row = 1, column = 1, padx = 2, pady = 2)
+buttonInsertion.grid(row = 2, column = 1, padx = 2, pady = 2)
+buttonSelection.grid(row = 3, column = 1, padx = 2, pady = 2)
+buttonMerge.grid(row = 4, column = 1, padx = 2, pady = 2)
+buttonHeap.grid(row = 5, column = 1, padx = 2, pady = 2)
+buttonBogo.grid(row = 6, column = 1, padx = 2, pady = 2)
 
 base.mainloop()
