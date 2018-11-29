@@ -21,12 +21,29 @@ fontTitle = tkf.Font(family = "Consolas", size = 12, weight = "bold", slant = "i
 fontBigTitle = tkf.Font(family = "Consolas", size = 16, weight = "bold", slant = "italic")
 fontName = tkf.Font(family = "Consolas", size = 16, weight = "bold")
 
+frameTimes = tk.LabelFrame(base, text = "Clocked Times", bd = 4, relief = "raised", font = fontTitle)
+frameTimes.grid(row = 0, column = 0, padx = 4, pady = 4, sticky = "n")
+
+listboxTimes = tk.Listbox(frameTimes, width = 30, height = 12,  font = fontNormal)
+listboxTimes.grid(row = 0, column = 0)
+
+scrollVTimes = tk.Scrollbar(frameTimes, orient = "vertical", command = listboxTimes.yview)
+scrollHTimes = tk.Scrollbar(frameTimes, orient = "horizontal", command = listboxTimes.xview)
+listboxTimes.configure(yscrollcommand = scrollVTimes.set, xscrollcommand = scrollHTimes.set)
+scrollVTimes.grid(row = 0, column = 1, sticky = "ns")
+scrollHTimes.grid(row = 1, column = 0, columnspan = 2, sticky = "we")
+
+def clockTime(start, end, algo):
+	listboxTimes.insert("end", algo + ": " + str(round(end - start, 4)) + " sec (E=" + \
+		str(elements.get()) + "; D=" + str(sleepTime.get() + sleepTimeFine.get()) + \
+		" sec)" \
+	)
+
 frameControls = tk.LabelFrame(base, text = "Sorting Controls", bd = 4, relief = "raised", font = fontTitle)
-frameControls.grid(row = 0, column = 0, padx = 4, pady = 4)
+frameControls.grid(row = 0, column = 1, padx = 4, pady = 4)
 
 frameMain = tk.LabelFrame(base, text="Sorting Panel", bd = 4, relief = "raised", font = fontTitle)
-frameMain.grid(row = 1, column = 0, padx = 4, pady = 4)
-
+frameMain.grid(row = 1, column = 0, columnspan = 2, padx = 4, pady = 4)
 
 frameScreen = tk.Canvas(frameMain, width = 800, height = 400)
 frameScreen.pack(padx = 4, pady = 4)
@@ -75,14 +92,14 @@ def updateElements(strNewElements):
 	frameScreen.update_idletasks()
 
 elements = tk.IntVar()
-scaleElements = tk.Scale(frameControls, label = "Sortable Elements", resolution = 10, from_ = 10, to = 800, length = 250, orient = "horizontal", variable = elements, command = updateElements, font = fontNormal)
+scaleElements = tk.Scale(frameControls, label = "Sortable Elements", resolution = 10, from_ = 10, to = 800, length = 200, orient = "horizontal", variable = elements, command = updateElements, font = fontNormal)
 scaleElements.grid(row = 0, column = 0, rowspan = 2, padx = 2, pady = 2)
 updateElements(0)
 
 sleepTime = tk.DoubleVar()
 sleepTimeFine = tk.DoubleVar()
-scaleSleep = tk.Scale(frameControls, label = "Time Delay on Swap (seconds)", resolution = 0.005, from_ = 0, to = 0.2, length = 250, orient = "horizontal", variable = sleepTime, font = fontNormal)
-scaleSleepFine = tk.Scale(frameControls, label = "Fine Time Delay on Swap (ms)", resolution = 0.1, from_ = 0, to = 4.9, length = 250, orient = "horizontal", variable = sleepTimeFine, font = fontNormal)
+scaleSleep = tk.Scale(frameControls, label = "Time Delay on Swap (seconds)", resolution = 0.005, from_ = 0, to = 0.2, length = 200, orient = "horizontal", variable = sleepTime, font = fontNormal)
+scaleSleepFine = tk.Scale(frameControls, label = "Fine Time Delay on Swap (ms)", resolution = 0.1, from_ = 0, to = 4.9, length = 200, orient = "horizontal", variable = sleepTimeFine, font = fontNormal)
 scaleSleep.grid(row = 2, column = 0, rowspan = 2, padx = 2, pady = 2)
 scaleSleepFine.grid(row = 4, column = 0, rowspan = 2, padx = 2, pady = 2)
 
@@ -134,6 +151,7 @@ def bubbleSort():
 	elementColorCoding["sortedBorder"] = elements.get()
 	swaps.set(0)
 	comparisons.set(0)
+	start = time.time()
 
 	for i in range(elements.get() - 1):
 		localSwaps = 0
@@ -152,11 +170,14 @@ def bubbleSort():
 		if localSwaps == 0:
 			break
 
+	clockTime(start, time.time(), "BBL")
+
 def insertionSort():
 	elementColorCoding["sortedSide"] = "left"
 	elementColorCoding["sortedBorder"] = -1
 	swaps.set(0)
 	comparisons.set(0)
+	start = time.time()
 
 	for i in range(1, elements.get()):
 		j = i - 1
@@ -168,6 +189,8 @@ def insertionSort():
 			comparisons.set(comparisons.get() + 1)
 
 		elementColorCoding["sortedBorder"] = i + 1
+
+	clockTime(start, time.time(), "INS")
 
 def selectionSort():
 	elementColorCoding["sortedSide"] = "left"
@@ -184,6 +207,8 @@ def selectionSort():
 
 		return min
 
+	start = time.time()
+
 	for i in range(1, elements.get()):
 		m = minIndex(i)
 
@@ -195,6 +220,8 @@ def selectionSort():
 			comparisons.set(comparisons.get() + 1)
 
 		elementColorCoding["sortedBorder"] = i - 1
+
+	clockTime(start, time.time(), "SLC")
 
 def merge(baseLeft, lengthLeft, baseRight, lengthRight):
 	localArray = elementHeights[baseLeft : baseLeft + lengthLeft + lengthRight]
@@ -216,7 +243,21 @@ def merge(baseLeft, lengthLeft, baseRight, lengthRight):
 		updateElements(0)
 		time.sleep(sleepTime.get() + sleepTimeFine.get() / 1000)
 
-def mergeSort(base, length):
+def mergeInPlace(baseLeft, lengthLeft, baseRight, lengthRight):
+	for i in range(baseRight + lengthRight - 1, baseRight - 1, -1):
+		elementColorCoding["indicated"] = i
+		j = baseLeft + lengthLeft - 1
+
+		while j > baseLeft and elementHeights[j - 1] > elementHeights[i]:
+			swap(j, j - 1, doDelay = False)
+			j -= 1
+
+		if elementHeights[j] > elementHeights[i]:
+			swap(j, i)
+
+	elementColorCoding["sortedBorder"] = baseRight + lengthRight - 1
+
+def mergeSort(base, length, mergeFunc = merge):
 	elementColorCoding["sortedSide"] = "left"
 	elementColorCoding["sortedBorder"] = -1
 
@@ -226,10 +267,10 @@ def mergeSort(base, length):
 		baseLeft = base
 		baseRight = base + lengthLeft
 
-		mergeSort(baseLeft, lengthLeft)
-		mergeSort(baseRight, lengthRight)
+		mergeSort(baseLeft, lengthLeft, mergeFunc)
+		mergeSort(baseRight, lengthRight, mergeFunc)
 
-		merge(baseLeft, lengthLeft, baseRight, lengthRight)
+		mergeFunc(baseLeft, lengthLeft, baseRight, lengthRight)
 
 #TODO: Quick & Bogo Sort.
 
@@ -253,12 +294,15 @@ def buildHeap(length):
 def heapSort():
 	elementColorCoding["sortedSide"] = "right"
 	elementColorCoding["sortedBorder"] = elements.get()
+	start = time.time()
 	buildHeap(elements.get())
 
 	for i in range(elements.get() - 1, 0, -1):
 		elementColorCoding["sortedBorder"] = i
 		swap(0, i)
 		buildHeap(i)
+
+	clockTime(start, time.time(), "HEAP")
 
 def bogoSort():
 	if elements.get() > 10:
@@ -307,15 +351,16 @@ def quickSort(left, right):
 		quickSort(left, pivot - 1)
 		quickSort(pivot + 1, right)
 
-buttonShuffle = tk.Button(frameControls, text = "Shuffle Elements", bd = 2, width = 16, command = shuffleElements, font = fontNormal)
-buttonReverse = tk.Button(frameControls, text = "Reverse Elements", bd = 2, width = 16, command = reverseElements, font = fontNormal)
-buttonBubble = tk.Button(frameControls, text = "Bubble Sort", bd = 2, width = 16, command = bubbleSort, font = fontNormal)
-buttonInsertion = tk.Button(frameControls, text = "Insertion Sort", bd = 2, width = 16, command = insertionSort, font = fontNormal)
-buttonSelection = tk.Button(frameControls, text = "Selection Sort", bd = 2, width = 16, command = selectionSort, font = fontNormal)
-buttonMerge = tk.Button(frameControls, text = "Merge Sort", bd = 2, width = 16, command = lambda: mergeSort(0, elements.get()), font = fontNormal)
-buttonHeap = tk.Button(frameControls, text = "Heap Sort", bd = 2, width = 16, command = heapSort, font = fontNormal)
-buttonQuick = tk.Button(frameControls, text = "Quick Sort", bd = 2, width = 16, command = lambda: quickSort(0, elements.get() - 1), font = fontNormal)
-buttonBogo = tk.Button(frameControls, text = "Bogo Sort", bd = 2, width = 16, command = bogoSort, font = fontNormal)
+buttonShuffle = tk.Button(frameControls, text = "Shuffle Elements", bd = 2, width = 20, command = shuffleElements, font = fontNormal)
+buttonReverse = tk.Button(frameControls, text = "Reverse Elements", bd = 2, width = 20, command = reverseElements, font = fontNormal)
+buttonBubble = tk.Button(frameControls, text = "Bubble Sort", bd = 2, width = 20, command = bubbleSort, font = fontNormal)
+buttonInsertion = tk.Button(frameControls, text = "Insertion Sort", bd = 2, width = 20, command = insertionSort, font = fontNormal)
+buttonSelection = tk.Button(frameControls, text = "Selection Sort", bd = 2, width = 20, command = selectionSort, font = fontNormal)
+buttonMerge = tk.Button(frameControls, text = "Merge Sort: O(N) Space", bd = 2, width = 20, command = lambda: mergeSort(0, elements.get()), font = fontNormal)
+buttonMergeIP = tk.Button(frameControls, text = "Merge Sort: In Place", bd = 2, width = 20, command = lambda: mergeSort(0, elements.get(), mergeInPlace), font = fontNormal)
+buttonHeap = tk.Button(frameControls, text = "Heap Sort", bd = 2, width = 20, command = heapSort, font = fontNormal)
+buttonQuick = tk.Button(frameControls, text = "Quick Sort", bd = 2, width = 20, command = lambda: quickSort(0, elements.get() - 1), font = fontNormal)
+buttonBogo = tk.Button(frameControls, text = "Bogo Sort", bd = 2, width = 20, command = bogoSort, font = fontNormal)
 
 buttonShuffle.grid(row = 0, column = 1, padx = 2, pady = 2)
 buttonReverse.grid(row = 0, column = 2, padx = 2, pady = 2)
@@ -327,8 +372,9 @@ buttonInsertion.grid(row = 2, column = 1, padx = 2, pady = 2)
 buttonSelection.grid(row = 2, column = 2, padx = 2, pady = 2)
 
 buttonMerge.grid(row = 3, column = 1, padx = 2, pady = 2)
-buttonHeap.grid(row = 3, column = 2, padx = 2, pady = 2)
+buttonMergeIP.grid(row = 3, column = 2, padx = 2, pady = 2)
 
-buttonQuick.grid(row = 4, column = 1, columnspan = 2, padx = 2, pady = 2)
+buttonHeap.grid(row = 4, column = 1, padx = 2, pady = 2)
+buttonQuick.grid(row = 4, column = 2, padx = 2, pady = 2)
 
 base.mainloop()
