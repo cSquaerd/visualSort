@@ -62,6 +62,8 @@ def updateElements(strNewElements):
 		elementColorCoding["indicated"] = -1
 		elementColorCoding["sortedBorder"] = -1
 		elementColorCoding["sortedSide"] = "none"
+		swaps.set(0)
+		comparisons.set(0)
 
 	elWidthUnit = round(800 / newElements, 2)
 	elHeightUnit = round(400 / newElements, 2)
@@ -84,6 +86,16 @@ scaleSleepFine = tk.Scale(frameControls, label = "Fine Time Delay on Swap (ms)",
 scaleSleep.grid(row = 2, column = 0, rowspan = 2, padx = 2, pady = 2)
 scaleSleepFine.grid(row = 4, column = 0, rowspan = 2, padx = 2, pady = 2)
 
+swaps = tk.IntVar()
+#labelSwaps = tk.Label(frameControls, textvariable = swaps, width = 6, anchor = "e", bd = 2, relief = "ridge", padx = 4, pady = 2, font = fontNormal)
+comparisons = tk.IntVar()
+#labelComparisons = tk.Label(frameControls, textvariable = comparisons, width = 6, anchor = "e", bd = 2, relief = "ridge", padx = 4, pady = 2, font = fontNormal)
+
+#tk.Label(frameControls, text = "Swaps:", font = fontNormal).grid(row = 5, column = 1, padx = 2, pady = 2, sticky = "w")
+#tk.Label(frameControls, text = "Comparisons:", font = fontNormal).grid(row = 5, column = 2, padx = 2, pady = 2, sticky = "w")
+#labelSwaps.grid(row = 5, column = 1, padx = 2, pady = 2, sticky = "e")
+#labelComparisons.grid(row = 5, column = 2, padx = 2, pady = 2, sticky = "e")
+
 def swap(elA, elB, doDelay = True):
 	if elA == elB:
 		return None
@@ -101,12 +113,16 @@ def shuffleElements():
 	elementColorCoding["indicated"] = -1
 	elementColorCoding["sortedBorder"] = -1
 	elementColorCoding["sortedSide"] = "none"
+	swaps.set(0)
+	comparisons.set(0)
 	updateElements(0)
 
 def reverseElements():
 	elementColorCoding["indicated"] = -1
 	elementColorCoding["sortedBorder"] = -1
 	elementColorCoding["sortedSide"] = "none"
+	swaps.set(0)
+	comparisons.set(0)
 
 	for i in range(len(elementHeights) // 2):
 		swap(i, elements.get() - (1 + i), doDelay = False)
@@ -116,37 +132,48 @@ def reverseElements():
 def bubbleSort():
 	elementColorCoding["sortedSide"] = "right"
 	elementColorCoding["sortedBorder"] = elements.get()
+	swaps.set(0)
+	comparisons.set(0)
 
 	for i in range(elements.get() - 1):
-		swaps = 0
+		localSwaps = 0
 
 		for j in range(elements.get() - i - 1):
 			elementColorCoding["indicated"] = j + 1
 			if elementHeights[j] > elementHeights[j + 1]:
 				swap(j, j + 1)
-				swaps += 1
+				localSwaps += 1
+				swaps.set(swaps.get() + 1)
+
+			comparisons.set(comparisons.get() + 1)
 
 		elementColorCoding["sortedBorder"] = j + 1
 
-		if swaps == 0:
+		if localSwaps == 0:
 			break
 
 def insertionSort():
 	elementColorCoding["sortedSide"] = "left"
 	elementColorCoding["sortedBorder"] = -1
+	swaps.set(0)
+	comparisons.set(0)
 
 	for i in range(1, elements.get()):
 		j = i - 1
 		while j >= 0 and elementHeights[j] > elementHeights[j + 1]:
 			elementColorCoding["indicated"] = j
 			swap(j + 1, j)
-			j -= 1;
+			j -= 1
+			swaps.set(swaps.get() + 1)
+			comparisons.set(comparisons.get() + 1)
 
 		elementColorCoding["sortedBorder"] = i + 1
 
 def selectionSort():
 	elementColorCoding["sortedSide"] = "left"
 	elementColorCoding["sortedBorder"] = -1
+	swaps.set(0)
+	comparisons.set(0)
 
 	def minIndex(firstIndex):
 		min = firstIndex
@@ -164,6 +191,8 @@ def selectionSort():
 			elementColorCoding["indicated"] = m - 1
 			swap(m, m - 1)
 			m -= 1
+			swaps.set(swaps.get() + 1)
+			comparisons.set(comparisons.get() + 1)
 
 		elementColorCoding["sortedBorder"] = i - 1
 
@@ -300,6 +329,6 @@ buttonSelection.grid(row = 2, column = 2, padx = 2, pady = 2)
 buttonMerge.grid(row = 3, column = 1, padx = 2, pady = 2)
 buttonHeap.grid(row = 3, column = 2, padx = 2, pady = 2)
 
-buttonQuick.grid(row = 4, column = 1, rowspan = 2, columnspan = 2, padx = 2, pady = 2)
+buttonQuick.grid(row = 4, column = 1, columnspan = 2, padx = 2, pady = 2)
 
 base.mainloop()
