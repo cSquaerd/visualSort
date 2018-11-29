@@ -70,7 +70,7 @@ scaleElements.grid(row = 0, column = 0, rowspan = 2, padx = 2, pady = 2)
 updateElements(0)
 
 sleepTime = tk.DoubleVar()
-scaleSleep = tk.Scale(frameControls, label = "Time Delay on Swap (seconds)", resolution = 0.005, from_ = 0.005, to = 0.2, length = 250, orient = "horizontal", variable = sleepTime, font = fontNormal)
+scaleSleep = tk.Scale(frameControls, label = "Time Delay on Swap (seconds)", resolution = 0.005, from_ = 0, to = 0.2, length = 250, orient = "horizontal", variable = sleepTime, font = fontNormal)
 scaleSleep.grid(row = 0, column = 1, rowspan = 2, padx = 2, pady = 2)
 
 def swap(elA, elB):
@@ -124,14 +124,46 @@ def selectionSort():
 			swap(m, m - 1)
 			m -= 1
 
+def merge(baseLeft, lengthLeft, baseRight, lengthRight):
+	localArray = elementHeights[baseLeft : baseLeft + lengthLeft + lengthRight]
+	localLeft = 0
+	localRight = lengthLeft
+
+	for k in range(baseLeft, baseLeft + lengthLeft + lengthRight):
+		elementColorCoding["indicated"] = k
+
+		if localRight == lengthLeft + lengthRight or (localLeft < lengthLeft and localArray[localLeft] < localArray[localRight]):
+			elementHeights[k] = localArray[localLeft]
+			localLeft += 1
+		else:
+			elementHeights[k] = localArray[localRight]
+			localRight += 1
+
+		updateElements(0)
+		time.sleep(sleepTime.get())
+
+def mergeSort(base, length):
+	if length > 1:
+		lengthLeft = length // 2
+		lengthRight = length - lengthLeft
+		baseLeft = base
+		baseRight = base + lengthLeft
+
+		mergeSort(baseLeft, lengthLeft)
+		mergeSort(baseRight, lengthRight)
+
+		merge(baseLeft, lengthLeft, baseRight, lengthRight)
+
 buttonShuffle = tk.Button(frameControls, text = "Shuffle Elements", bd = 2, width = 16, command = shuffleElements, font = fontNormal)
 buttonBubble = tk.Button(frameControls, text = "Bubble Sort", bd = 2, width = 16, command = bubbleSort, font = fontNormal)
 buttonInsertion = tk.Button(frameControls, text = "Insertion Sort", bd = 2, width = 16, command = insertionSort, font = fontNormal)
 buttonSelection = tk.Button(frameControls, text = "Selection Sort", bd = 2, width = 16, command = selectionSort, font = fontNormal)
+buttonMerge = tk.Button(frameControls, text = "Merge Sort", bd = 2, width = 16, command = lambda: mergeSort(0, elements.get()), font = fontNormal)
 
 buttonShuffle.grid(row = 0, column = 2, padx = 2, pady = 2)
 buttonBubble.grid(row = 0, column = 3, padx = 2, pady = 2)
 buttonInsertion.grid(row = 1, column = 2, padx = 2, pady = 2)
 buttonSelection.grid(row = 1, column = 3, padx = 2, pady = 2)
+buttonMerge.grid(row = 0, column = 4, padx = 2, pady = 2)
 
 base.mainloop()
