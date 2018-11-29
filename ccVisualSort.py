@@ -31,14 +31,19 @@ frameMain.grid(row = 1, column = 0, padx = 4, pady = 4)
 frameScreen = tk.Canvas(frameMain, width = 800, height = 400)
 frameScreen.pack(padx = 4, pady = 4)
 
-elementHeights = list(range(1, 11))
-elementColorCoding = {"indicated": 0}
+elementHeights = list(range(1, 21))
+elementColorCoding = {"indicated": 0, "sortedBorder": -1, "sortedSide": "none"}
 
 def processColor(element):
 	colorNormal = "#2E52C4"
 	colorIndicated = "#678DFF"
-	#colorSwap = "#002080"
-	return colorIndicated if element == elementColorCoding["indicated"] else colorNormal
+	colorSorted = "#002080"
+	return colorIndicated if element == elementColorCoding["indicated"] else \
+		colorSorted if element <= elementColorCoding["sortedBorder"] and \
+			elementColorCoding["sortedSide"] == "left" or \
+		element >= elementColorCoding["sortedBorder"] and \
+			elementColorCoding["sortedSide"] == "right" \
+		else colorNormal
 
 def clearElements():
 	for el in frameScreen.find_all():
@@ -65,7 +70,7 @@ def updateElements(strNewElements):
 	frameScreen.update_idletasks()
 
 elements = tk.IntVar()
-scaleElements = tk.Scale(frameControls, label = "Sortable Elements", resolution = 10, from_ = 10, to = 400, length = 250, orient = "horizontal", variable = elements, command = updateElements, font = fontNormal)
+scaleElements = tk.Scale(frameControls, label = "Sortable Elements", resolution = 20, from_ = 20, to = 800, length = 250, orient = "horizontal", variable = elements, command = updateElements, font = fontNormal)
 scaleElements.grid(row = 0, column = 0, rowspan = 2, padx = 2, pady = 2)
 updateElements(0)
 
@@ -77,6 +82,9 @@ scaleSleep.grid(row = 2, column = 0, rowspan = 2, padx = 2, pady = 2)
 scaleSleepFine.grid(row = 4, column = 0, rowspan = 2, padx = 2, pady = 2)
 
 def swap(elA, elB):
+	if elA == elB:
+		return None
+
 	elementHeights[elA] += elementHeights[elB]
 	elementHeights[elB] -= elementHeights[elA]
 	elementHeights[elB] *= -1
@@ -86,17 +94,23 @@ def swap(elA, elB):
 
 def shuffleElements():
 	rnd.shuffle(elementHeights)
+	elementColorCoding["indicated"] = 0
+	elementColorCoding["sortedBorder"] = -1
+	elementColorCoding["sortedSide"] = "none"
 	updateElements(0)
 
 def bubbleSort():
+	elementColorCoding["sortedSide"] = "right"
 	for i in range(elements.get() - 1):
 		swaps = 0
 
 		for j in range(elements.get() - i - 1):
-			elementColorCoding["indicated"] = j
+			elementColorCoding["indicated"] = j + 1
 			if elementHeights[j] > elementHeights[j + 1]:
 				swap(j, j + 1)
 				swaps += 1
+
+		elementColorCoding["sortedBorder"] = j
 
 		if swaps == 0:
 			break
@@ -123,7 +137,7 @@ def selectionSort():
 		m = minIndex(i)
 
 		while m >= i and elementHeights[m] < elementHeights[m - 1]:
-			elementColorCoding["indicated"] = m
+			elementColorCoding["indicated"] = m - 1
 			swap(m, m - 1)
 			m -= 1
 
@@ -205,12 +219,34 @@ def bogoSort():
 		if not broke:
 			sorted = True
 
+def qsPartition(left, right):
+	elementColorCoding["indicated"] = right
+	pivot=elementHeights[right]
+	i = left
+
+	for j in range(left, right):
+		if elementHeights[j] < pivot:
+			if i != j:
+				swap(i, j)
+
+			i += 1
+
+	swap(i, right)
+	return i
+
+def quickSort(left, right):
+    if left < right:
+        pivot = qsPartition(left, right)
+        quickSort(left, pivot - 1)
+        quickSort(pivot + 1, right)
+
 buttonShuffle = tk.Button(frameControls, text = "Shuffle Elements", bd = 2, width = 16, command = shuffleElements, font = fontNormal)
 buttonBubble = tk.Button(frameControls, text = "Bubble Sort", bd = 2, width = 16, command = bubbleSort, font = fontNormal)
 buttonInsertion = tk.Button(frameControls, text = "Insertion Sort", bd = 2, width = 16, command = insertionSort, font = fontNormal)
 buttonSelection = tk.Button(frameControls, text = "Selection Sort", bd = 2, width = 16, command = selectionSort, font = fontNormal)
 buttonMerge = tk.Button(frameControls, text = "Merge Sort", bd = 2, width = 16, command = lambda: mergeSort(0, elements.get()), font = fontNormal)
 buttonHeap = tk.Button(frameControls, text = "Heap Sort", bd = 2, width = 16, command = heapSort, font = fontNormal)
+buttonQuick = tk.Button(frameControls, text = "Quick Sort", bd = 2, width = 16, command = lambda: quickSort(0, elements.get() - 1), font = fontNormal)
 buttonBogo = tk.Button(frameControls, text = "Bogo Sort", bd = 2, width = 16, command = bogoSort, font = fontNormal)
 
 buttonShuffle.grid(row = 0, column = 1, padx = 2, pady = 2)
@@ -219,6 +255,7 @@ buttonInsertion.grid(row = 2, column = 1, padx = 2, pady = 2)
 buttonSelection.grid(row = 3, column = 1, padx = 2, pady = 2)
 buttonMerge.grid(row = 4, column = 1, padx = 2, pady = 2)
 buttonHeap.grid(row = 5, column = 1, padx = 2, pady = 2)
-buttonBogo.grid(row = 6, column = 1, padx = 2, pady = 2)
+buttonQuick.grid(row = 6, column = 1, padx = 2, pady = 2)
+buttonBogo.grid(row = 7, column = 1, padx = 2, pady = 2)
 
 base.mainloop()
