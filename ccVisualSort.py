@@ -17,16 +17,8 @@ base.title("Charlie Cook's Visual Sorting Demo")
 base.resizable(False, False)
 
 # Fonts
-fontSmall = tkf.Font(family = "Consolas", size = 8)
 fontNormal = tkf.Font(family = "Consolas", size = 10)
-fontNormUnd = tkf.Font(family = "Consolas", size = 10, underline = 1)
-fontNormBold = tkf.Font(family = "Consolas", size = 10, weight = "bold")
-fontLarge = tkf.Font(family = "Consolas", size = 12)
-fontLargeBold = tkf.Font(family = "Consolas", size = 12, weight = "bold")
-fontSubtitle = tkf.Font(family = "Consolas", size = 12, slant = "italic")
 fontTitle = tkf.Font(family = "Consolas", size = 12, weight = "bold", slant = "italic")
-fontBigTitle = tkf.Font(family = "Consolas", size = 16, weight = "bold", slant = "italic")
-fontName = tkf.Font(family = "Consolas", size = 16, weight = "bold")
 
 frameTimes = tk.LabelFrame(base, text = "Clocked Times", bd = 4, relief = "raised", font = fontTitle)
 frameTimes.grid(row = 0, column = 0, padx = 4, pady = 4, sticky = "n")
@@ -385,19 +377,25 @@ def quickSort(left, right):
 	if left == 0 and right == elements.get() - 1:
 		clockTime(start, time.time(), "QCK")
 
-buttonShuffle = tk.Button(frameControls, text = "Shuffle Elements", bd = 2, width = 20, command = shuffleElements, font = fontNormal)
-buttonReverse = tk.Button(frameControls, text = "Reverse Elements", bd = 2, width = 20, command = reverseElements, font = fontNormal)
-buttonBubble = tk.Button(frameControls, text = "Bubble Sort", bd = 2, width = 20, command = bubbleSort, font = fontNormal)
-buttonInsertion = tk.Button(frameControls, text = "Insertion Sort", bd = 2, width = 20, command = insertionSort, font = fontNormal)
-buttonSelection = tk.Button(frameControls, text = "Selection Sort", bd = 2, width = 20, command = selectionSort, font = fontNormal)
-buttonMerge = tk.Button(frameControls, text = "Merge Sort: O(N) Space", bd = 2, width = 20, command = lambda: mergeSort(0, elements.get()), font = fontNormal)
-buttonMergeIP = tk.Button(frameControls, text = "Merge Sort: In Place", bd = 2, width = 20, command = lambda: mergeSort(0, elements.get(), mergeInPlace), font = fontNormal)
-buttonHeap = tk.Button(frameControls, text = "Heap Sort", bd = 2, width = 20, command = heapSort, font = fontNormal)
-buttonQuick = tk.Button(frameControls, text = "Quick Sort", bd = 2, width = 20, command = lambda: quickSort(0, elements.get() - 1), font = fontNormal)
-buttonBogo = tk.Button(frameControls, text = "Bogo Sort", bd = 2, width = 20, command = bogoSort, font = fontNormal)
+frameMix = tk.LabelFrame(frameControls, text = "Mixing Algorithms", bd = 2, font = fontTitle)
+buttonShuffle = tk.Button(frameMix, text = "Shuffle", bd = 2, width = 16, command = shuffleElements, font = fontNormal)
+buttonReverse = tk.Button(frameMix, text = "Reverse", bd = 2, width = 16, command = reverseElements, font = fontNormal)
 
+frameSort = tk.LabelFrame(frameControls, text = "Sorting Algorithms", bd = 2, font = fontTitle)
+buttonBubble = tk.Button(frameSort, text = "Bubble", bd = 2, width = 16, command = bubbleSort, font = fontNormal)
+buttonInsertion = tk.Button(frameSort, text = "Insertion", bd = 2, width = 16, command = insertionSort, font = fontNormal)
+buttonSelection = tk.Button(frameSort, text = "Selection", bd = 2, width = 16, command = selectionSort, font = fontNormal)
+buttonMerge = tk.Button(frameSort, text = "Merge: O(N) Space", bd = 2, width = 16, command = lambda: mergeSort(0, elements.get()), font = fontNormal)
+buttonMergeIP = tk.Button(frameSort, text = "Merge: In Place", bd = 2, width = 16, command = lambda: mergeSort(0, elements.get(), mergeInPlace), font = fontNormal)
+buttonHeap = tk.Button(frameSort, text = "Heap", bd = 2, width = 16, command = heapSort, font = fontNormal)
+buttonQuick = tk.Button(frameSort, text = "Quick", bd = 2, width = 16, command = lambda: quickSort(0, elements.get() - 1), font = fontNormal)
+buttonBogo = tk.Button(frameSort, text = "Bogo", bd = 2, width = 16, command = bogoSort, font = fontNormal)
+
+frameMix.grid(row = 0, column = 1, rowspan = 2, padx = 2, pady = 2)
 buttonShuffle.grid(row = 0, column = 1, padx = 2, pady = 2)
 buttonReverse.grid(row = 0, column = 2, padx = 2, pady = 2)
+
+frameSort.grid(row = 2, column = 1, rowspan = 4, padx = 2, pady = 2)
 
 buttonBogo.grid(row = 1, column = 1, padx = 2, pady = 2)
 buttonBubble.grid(row = 1, column = 2, padx = 2, pady = 2)
