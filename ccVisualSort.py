@@ -377,12 +377,35 @@ def quickSort(left, right):
 	if left == 0 and right == elements.get() - 1:
 		clockTime(start, time.time(), "QCK")
 
+def cocktailSort():
+	start = time.time()
+
+	for i in range(elements.get() // 2):
+		print(i)
+		localSwaps = 0
+
+		for j in range(i, elements.get () - i - 1):
+			if elementHeights[j] > elementHeights[j + 1]:
+				swap(j, j + 1)
+				localSwaps += 1
+
+		for j in range(elements.get() - i - 1, i, -1):
+			if elementHeights[j] < elementHeights[j - 1]:
+				swap(j, j - 1)
+				localSwaps += 1
+
+		if localSwaps == 0:
+			break
+
+	clockTime(start, time.time(), "CKTL")
+
 frameMix = tk.LabelFrame(frameControls, text = "Mixing Algorithms", bd = 2, font = fontTitle)
 buttonShuffle = tk.Button(frameMix, text = "Shuffle", bd = 2, width = 16, command = shuffleElements, font = fontNormal)
 buttonReverse = tk.Button(frameMix, text = "Reverse", bd = 2, width = 16, command = reverseElements, font = fontNormal)
 
 frameSort = tk.LabelFrame(frameControls, text = "Sorting Algorithms", bd = 2, font = fontTitle)
 buttonBubble = tk.Button(frameSort, text = "Bubble", bd = 2, width = 16, command = bubbleSort, font = fontNormal)
+buttonCocktail = tk.Button(frameSort, text = "Cocktail", bd = 2, width = 16, command = cocktailSort, font = fontNormal)
 buttonInsertion = tk.Button(frameSort, text = "Insertion", bd = 2, width = 16, command = insertionSort, font = fontNormal)
 buttonSelection = tk.Button(frameSort, text = "Selection", bd = 2, width = 16, command = selectionSort, font = fontNormal)
 buttonMerge = tk.Button(frameSort, text = "Merge: O(N) Space", bd = 2, width = 16, command = lambda: mergeSort(0, elements.get()), font = fontNormal)
@@ -399,6 +422,7 @@ frameSort.grid(row = 2, column = 1, rowspan = 4, padx = 2, pady = 2)
 
 buttonBogo.grid(row = 1, column = 1, padx = 2, pady = 2)
 buttonBubble.grid(row = 1, column = 2, padx = 2, pady = 2)
+buttonCocktail.grid(row = 1, column = 3, padx = 2, pady = 2)
 
 buttonInsertion.grid(row = 2, column = 1, padx = 2, pady = 2)
 buttonSelection.grid(row = 2, column = 2, padx = 2, pady = 2)
