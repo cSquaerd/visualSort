@@ -114,20 +114,29 @@ def updateElements(strNewElements):
 	frameScreen.update_idletasks()
 
 elements = tk.IntVar()
-scaleElements = tk.Scale(frameControls, label = "Sortable Elements", resolution = 10, from_ = 10, to = 800, length = 200, orient = "horizontal", showvalue = False, variable = elements, command = updateElements, font = fontNormal)
+scaleElements = tk.Scale(frameControls, label = "Sortable Elements", resolution = 10, from_ = 10, to = 800, length = 200, orient = "horizontal", variable = elements, command = updateElements, font = fontNormal)
 scaleElements.grid(row = 0, column = 0, rowspan = 2, padx = 2, pady = 2)
 updateElements(0)
 
 randomHeights = tk.BooleanVar()
-checkRandomElements = tk.Checkbutton(frameControls, text = "Random Heights", variable = randomHeights, command = lambda : updateElements("randomize") if randomHeights.get() else updateElements(elements.get()), font = fontNormal)
-checkRandomElements.grid(row = 6, column = 0, padx = 2, pady = 2)
+checkRandomElements = tk.Checkbutton(frameControls, text = "Random Heights", bd = 2, relief = "sunken", variable = randomHeights, command = lambda : updateElements("randomize") if randomHeights.get() else updateElements(elements.get()), font = fontNormal)
+checkRandomElements.grid(row = 2, column = 0, padx = 2, pady = 2)
 
 sleepTime = tk.DoubleVar()
 sleepTimeFine = tk.DoubleVar()
-scaleSleep = tk.Scale(frameControls, label = "Time Delay on Swap (seconds)", resolution = 0.005, from_ = 0, to = 0.2, length = 200, orient = "horizontal", showvalue = False, variable = sleepTime, font = fontNormal)
-scaleSleepFine = tk.Scale(frameControls, label = "Fine Time Delay on Swap (ms)", resolution = 0.1, from_ = 0, to = 4.9, length = 200, orient = "horizontal", showvalue = False, variable = sleepTimeFine, font = fontNormal)
-scaleSleep.grid(row = 2, column = 0, rowspan = 2, padx = 2, pady = 2)
-scaleSleepFine.grid(row = 4, column = 0, rowspan = 2, padx = 2, pady = 2)
+sleepTimeSum = tk.StringVar()
+sleepTimeSum.set("Time Delay: 0.0 ms")
+
+def updateSleepTime(t):
+	sleepTimeSum.set("Time Delay: " + str(sleepTime.get() * 1000 + sleepTimeFine.get()) + " ms")
+
+scaleSleep = tk.Scale(frameControls, label = "Time Delay on Swap (seconds)", resolution = 0.005, from_ = 0, to = 0.2, length = 200, orient = "horizontal", showvalue = False, command = updateSleepTime, variable = sleepTime, font = fontNormal)
+scaleSleepFine = tk.Scale(frameControls, label = "Fine Time Delay on Swap (ms)", resolution = 0.1, from_ = 0, to = 4.9, length = 200, orient = "horizontal", showvalue = False, command = updateSleepTime, variable = sleepTimeFine, font = fontNormal)
+labelSleep = tk.Label(frameControls, textvariable = sleepTimeSum, bd = 2, relief = "sunken", anchor = "w", font = fontNormal)
+
+scaleSleep.grid(row = 3, column = 0, padx = 2, pady = 2)
+scaleSleepFine.grid(row = 4, column = 0, padx = 2, pady = 2)
+labelSleep.grid(row = 5, column = 0, padx = 2, pady = 2)
 
 swaps = tk.IntVar()
 #labelSwaps = tk.Label(frameControls, textvariable = swaps, width = 6, anchor = "e", bd = 2, relief = "ridge", padx = 4, pady = 2, font = fontNormal)
