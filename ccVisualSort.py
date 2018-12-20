@@ -80,20 +80,29 @@ def clearElements():
 		frameScreen.delete(el)
 
 def updateElements(strNewElements):
-	newElements = int(strNewElements)
+	try:
+		newElements = int(strNewElements)
+	except ValueError:
+		newElements = strNewElements
+
 	clearElements()
 
 	global elementHeights
 
 	if newElements == 0:
 		newElements = elements.get()
-	else:
+	elif type(newElements) is int:
 		elementHeights = list(range(1, newElements + 1))
 		elementColorCoding["indicated"] = -1
 		elementColorCoding["sortedBorder"] = -1
 		elementColorCoding["sortedSide"] = "none"
 		swaps.set(0)
 		comparisons.set(0)
+	elif newElements == "randomize":
+		elementHeights = []
+		for i in range(elements.get()):
+			elementHeights.append(rnd.randint(1,elements.get()))
+		newElements = elements.get()
 
 	elWidthUnit = round(800 / newElements, 2)
 	elHeightUnit = round(400 / newElements, 2)
@@ -105,14 +114,18 @@ def updateElements(strNewElements):
 	frameScreen.update_idletasks()
 
 elements = tk.IntVar()
-scaleElements = tk.Scale(frameControls, label = "Sortable Elements", resolution = 10, from_ = 10, to = 800, length = 200, orient = "horizontal", variable = elements, command = updateElements, font = fontNormal)
+scaleElements = tk.Scale(frameControls, label = "Sortable Elements", resolution = 10, from_ = 10, to = 800, length = 200, orient = "horizontal", showvalue = False, variable = elements, command = updateElements, font = fontNormal)
 scaleElements.grid(row = 0, column = 0, rowspan = 2, padx = 2, pady = 2)
 updateElements(0)
 
+randomHeights = tk.BooleanVar()
+checkRandomElements = tk.Checkbutton(frameControls, text = "Random Heights", variable = randomHeights, command = lambda : updateElements("randomize") if randomHeights.get() else updateElements(elements.get()), font = fontNormal)
+checkRandomElements.grid(row = 6, column = 0, padx = 2, pady = 2)
+
 sleepTime = tk.DoubleVar()
 sleepTimeFine = tk.DoubleVar()
-scaleSleep = tk.Scale(frameControls, label = "Time Delay on Swap (seconds)", resolution = 0.005, from_ = 0, to = 0.2, length = 200, orient = "horizontal", variable = sleepTime, font = fontNormal)
-scaleSleepFine = tk.Scale(frameControls, label = "Fine Time Delay on Swap (ms)", resolution = 0.1, from_ = 0, to = 4.9, length = 200, orient = "horizontal", variable = sleepTimeFine, font = fontNormal)
+scaleSleep = tk.Scale(frameControls, label = "Time Delay on Swap (seconds)", resolution = 0.005, from_ = 0, to = 0.2, length = 200, orient = "horizontal", showvalue = False, variable = sleepTime, font = fontNormal)
+scaleSleepFine = tk.Scale(frameControls, label = "Fine Time Delay on Swap (ms)", resolution = 0.1, from_ = 0, to = 4.9, length = 200, orient = "horizontal", showvalue = False, variable = sleepTimeFine, font = fontNormal)
 scaleSleep.grid(row = 2, column = 0, rowspan = 2, padx = 2, pady = 2)
 scaleSleepFine.grid(row = 4, column = 0, rowspan = 2, padx = 2, pady = 2)
 
@@ -205,25 +218,25 @@ def insertionSort():
 
 	clockTime(start, time.time(), "INS")
 
+def minIndex(firstIndex, lastIndex):
+	iMin = firstIndex
+
+	for i in range(firstIndex + 1, lastIndex):
+		if elementHeights[i] < elementHeights[iMin]:
+			iMin = i
+
+	return iMin
+
 def selectionSort():
 	elementColorCoding["sortedSide"] = "left"
 	elementColorCoding["sortedBorder"] = -1
 	swaps.set(0)
 	comparisons.set(0)
 
-	def minIndex(firstIndex):
-		min = firstIndex
-
-		for i in range(firstIndex, elements.get()):
-			if elementHeights[i] < elementHeights[min]:
-				min = i
-
-		return min
-
 	start = time.time()
 
 	for i in range(1, elements.get()):
-		m = minIndex(i)
+		m = minIndex(i, elements.get())
 
 		while m >= i and elementHeights[m] < elementHeights[m - 1]:
 			elementColorCoding["indicated"] = m - 1
@@ -399,6 +412,42 @@ def cocktailSort():
 
 	clockTime(start, time.time(), "CKTL")
 
+def maxIndex(firstIndex, lastIndex):
+	iMax = firstIndex
+
+	for i in range(firstIndex + 1, lastIndex):
+		if elementHeights[i] > elementHeights[iMax]:
+			iMax = i
+
+	return iMax
+
+def doubleSelectionSort():
+	start = time.time()
+
+	for i in range(elements.get() // 2):
+		m = minIndex(i, elements.get() - i)
+
+		while m > i and elementHeights[m] < elementHeights[m - 1]:
+			swap(m, m - 1)
+			m -= 1
+
+		m = maxIndex(i + 1, elements.get() - i)
+
+		while m < elements.get() - i - 1 and elementHeights[m] > elementHeights[m + 1]:
+			swap(m, m + 1)
+			m += 1
+
+	clockTime(start, time.time(), "DSLC")
+
+def unstableSelectionSort():
+	start = time.time()
+
+	for i in range(elements.get() - 1):
+		m = minIndex(i, elements.get())
+		swap(i, m)
+
+	clockTime(start, time.time(), "USLC")
+
 frameMix = tk.LabelFrame(frameControls, text = "Mixing Algorithms", bd = 2, font = fontTitle)
 buttonShuffle = tk.Button(frameMix, text = "Shuffle", bd = 2, width = 16, command = shuffleElements, font = fontNormal)
 buttonReverse = tk.Button(frameMix, text = "Reverse", bd = 2, width = 16, command = reverseElements, font = fontNormal)
@@ -408,6 +457,8 @@ buttonBubble = tk.Button(frameSort, text = "Bubble", bd = 2, width = 16, command
 buttonCocktail = tk.Button(frameSort, text = "Cocktail", bd = 2, width = 16, command = cocktailSort, font = fontNormal)
 buttonInsertion = tk.Button(frameSort, text = "Insertion", bd = 2, width = 16, command = insertionSort, font = fontNormal)
 buttonSelection = tk.Button(frameSort, text = "Selection", bd = 2, width = 16, command = selectionSort, font = fontNormal)
+buttonDoubleSelection = tk.Button(frameSort, text = "Double Selection", bd = 2, width = 16, command = doubleSelectionSort, font = fontNormal)
+buttonUnstableSelection = tk.Button(frameSort, text = "Unstable Selection", bd = 2, width = 16, command = unstableSelectionSort, font = fontNormal)
 buttonMerge = tk.Button(frameSort, text = "Merge: O(N) Space", bd = 2, width = 16, command = lambda: mergeSort(0, elements.get()), font = fontNormal)
 buttonMergeIP = tk.Button(frameSort, text = "Merge: In Place", bd = 2, width = 16, command = lambda: mergeSort(0, elements.get(), mergeInPlace), font = fontNormal)
 buttonHeap = tk.Button(frameSort, text = "Heap", bd = 2, width = 16, command = heapSort, font = fontNormal)
@@ -426,9 +477,11 @@ buttonCocktail.grid(row = 1, column = 3, padx = 2, pady = 2)
 
 buttonInsertion.grid(row = 2, column = 1, padx = 2, pady = 2)
 buttonSelection.grid(row = 2, column = 2, padx = 2, pady = 2)
+buttonDoubleSelection.grid(row = 2, column = 3, padx = 2, pady = 2)
 
 buttonMerge.grid(row = 3, column = 1, padx = 2, pady = 2)
 buttonMergeIP.grid(row = 3, column = 2, padx = 2, pady = 2)
+buttonUnstableSelection.grid(row = 3, column = 3, padx = 2, pady = 2)
 
 buttonHeap.grid(row = 4, column = 1, padx = 2, pady = 2)
 buttonQuick.grid(row = 4, column = 2, padx = 2, pady = 2)
