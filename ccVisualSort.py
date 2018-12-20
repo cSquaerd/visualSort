@@ -135,14 +135,13 @@ sleepTimeSum.set("Time Delay: 0.0 ms")
 def updateSleepTime(t):
 	sleepTimeSum.set("Time Delay: " + str(sleepTime.get() * 1000 + sleepTimeFine.get()) + " ms")
 
-scaleSleep = tk.Scale(frameControls, label = "Time Delay on Swap (seconds)", resolution = 0.005, from_ = 0, to = 0.2, length = 200, orient = "horizontal", showvalue = False, command = updateSleepTime, variable = sleepTime, font = fontNormal)
-scaleSleepFine = tk.Scale(frameControls, label = "Fine Time Delay on Swap (ms)", resolution = 0.1, from_ = 0, to = 4.9, length = 200, orient = "horizontal", showvalue = False, command = updateSleepTime, variable = sleepTimeFine, font = fontNormal)
+scaleSleep = tk.Scale(frameControls, label = "Time Delay on Swap (Coarse)", resolution = 0.005, from_ = 0, to = 0.2, length = 200, orient = "horizontal", showvalue = False, command = updateSleepTime, variable = sleepTime, font = fontNormal)
+scaleSleepFine = tk.Scale(frameControls, label = "Time Delay on Swap (Fine)", resolution = 0.1, from_ = 0, to = 4.9, length = 200, orient = "horizontal", showvalue = False, command = updateSleepTime, variable = sleepTimeFine, font = fontNormal)
 labelSleep = tk.Label(frameControls, textvariable = sleepTimeSum, bd = 2, relief = "sunken", font = fontNormal)
 
 scaleSleep.grid(row = 3, column = 0, padx = 2, pady = 2)
 scaleSleepFine.grid(row = 4, column = 0, padx = 2, pady = 2)
 labelSleep.grid(row = 5, column = 0, padx = 2, pady = 2)
-tk.Label(frameControls, textvariable = elements, bd = 2, relief = "sunken", font = fontNormal).grid(row = 6, column = 0, padx = 2, pady = 2)
 
 swaps = tk.IntVar()
 #labelSwaps = tk.Label(frameControls, textvariable = swaps, width = 6, anchor = "e", bd = 2, relief = "ridge", padx = 4, pady = 2, font = fontNormal)
