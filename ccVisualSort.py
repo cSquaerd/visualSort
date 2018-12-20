@@ -62,17 +62,22 @@ frameScreen = tk.Canvas(frameMain, width = 800, height = 400)
 frameScreen.pack(padx = 4, pady = 4)
 
 elementHeights = list(range(1, 11))
-elementColorCoding = {"indicated": 0, "sortedBorder": -1, "sortedSide": "none"}
+elementColorCoding = {"indicated": 0, "minOrMax": -1, "sortedBorder": -1, "sortedBorderAux": -1, "sortedSide": "none"}
 
 def processColor(element):
 	colorNormal = "#2E52C4"
 	colorIndicated = "#678DFF"
+	colorMinOrMax = "#8D8DFF"
 	colorSorted = "#002080"
-	return colorIndicated if element == elementColorCoding["indicated"] else \
+	return colorMinOrMax if element == elementColorCoding["minOrMax"] else \
+		colorIndicated if element == elementColorCoding["indicated"] else \
 		colorSorted if element <= elementColorCoding["sortedBorder"] and \
 			elementColorCoding["sortedSide"] == "left" or \
 		element >= elementColorCoding["sortedBorder"] and \
-			elementColorCoding["sortedSide"] == "right" \
+			elementColorCoding["sortedSide"] == "right" or \
+		( element <= elementColorCoding["sortedBorder"] or \
+			element >= elementColorCoding["sortedBorderAux"]) and \
+			elementColorCoding["sortedSide"] == "both" \
 		else colorNormal
 
 def clearElements():
@@ -86,23 +91,23 @@ def updateElements(strNewElements):
 		newElements = strNewElements
 
 	clearElements()
-
 	global elementHeights
 
 	if newElements == 0:
 		newElements = elements.get()
-	elif type(newElements) is int:
-		elementHeights = list(range(1, newElements + 1))
-		elementColorCoding["indicated"] = -1
-		elementColorCoding["sortedBorder"] = -1
-		elementColorCoding["sortedSide"] = "none"
-		swaps.set(0)
-		comparisons.set(0)
-	elif newElements == "randomize":
+	elif newElements == "randomize" or randomHeights.get():
 		elementHeights = []
 		for i in range(elements.get()):
 			elementHeights.append(rnd.randint(1,elements.get()))
 		newElements = elements.get()
+	else:
+		elementHeights = list(range(1, newElements + 1))
+		elementColorCoding["indicated"] = -1
+		elementColorCoding["minOrMax"] = -1
+		elementColorCoding["sortedBorder"] = -1
+		elementColorCoding["sortedSide"] = "none"
+		swaps.set(0)
+		comparisons.set(0)
 
 	elWidthUnit = round(800 / newElements, 2)
 	elHeightUnit = round(400 / newElements, 2)
@@ -132,11 +137,12 @@ def updateSleepTime(t):
 
 scaleSleep = tk.Scale(frameControls, label = "Time Delay on Swap (seconds)", resolution = 0.005, from_ = 0, to = 0.2, length = 200, orient = "horizontal", showvalue = False, command = updateSleepTime, variable = sleepTime, font = fontNormal)
 scaleSleepFine = tk.Scale(frameControls, label = "Fine Time Delay on Swap (ms)", resolution = 0.1, from_ = 0, to = 4.9, length = 200, orient = "horizontal", showvalue = False, command = updateSleepTime, variable = sleepTimeFine, font = fontNormal)
-labelSleep = tk.Label(frameControls, textvariable = sleepTimeSum, bd = 2, relief = "sunken", anchor = "w", font = fontNormal)
+labelSleep = tk.Label(frameControls, textvariable = sleepTimeSum, bd = 2, relief = "sunken", font = fontNormal)
 
 scaleSleep.grid(row = 3, column = 0, padx = 2, pady = 2)
 scaleSleepFine.grid(row = 4, column = 0, padx = 2, pady = 2)
 labelSleep.grid(row = 5, column = 0, padx = 2, pady = 2)
+tk.Label(frameControls, textvariable = elements, bd = 2, relief = "sunken", font = fontNormal).grid(row = 6, column = 0, padx = 2, pady = 2)
 
 swaps = tk.IntVar()
 #labelSwaps = tk.Label(frameControls, textvariable = swaps, width = 6, anchor = "e", bd = 2, relief = "ridge", padx = 4, pady = 2, font = fontNormal)
@@ -163,6 +169,7 @@ def swap(elA, elB, doDelay = True):
 def shuffleElements():
 	rnd.shuffle(elementHeights)
 	elementColorCoding["indicated"] = -1
+	elementColorCoding["minOrMax"] = -1
 	elementColorCoding["sortedBorder"] = -1
 	elementColorCoding["sortedSide"] = "none"
 	swaps.set(0)
@@ -171,6 +178,7 @@ def shuffleElements():
 
 def reverseElements():
 	elementColorCoding["indicated"] = -1
+	elementColorCoding["minOrMax"] = -1
 	elementColorCoding["sortedBorder"] = -1
 	elementColorCoding["sortedSide"] = "none"
 	swaps.set(0)
@@ -196,11 +204,12 @@ def bubbleSort():
 			if elementHeights[j] > elementHeights[j + 1]:
 				swap(j, j + 1)
 				localSwaps += 1
+				lastSwap = j + 1
 				swaps.set(swaps.get() + 1)
 
 			comparisons.set(comparisons.get() + 1)
 
-		elementColorCoding["sortedBorder"] = j + 1
+		elementColorCoding["sortedBorder"] = lastSwap
 
 		if localSwaps == 0:
 			break
@@ -229,10 +238,15 @@ def insertionSort():
 
 def minIndex(firstIndex, lastIndex):
 	iMin = firstIndex
+	elementColorCoding["minOrMax"] = firstIndex
 
 	for i in range(firstIndex + 1, lastIndex):
+
 		if elementHeights[i] < elementHeights[iMin]:
 			iMin = i
+			elementColorCoding["minOrMax"] = i
+			updateElements(0)
+			time.sleep(sleepTime.get() + sleepTimeFine.get() / 1000)
 
 	return iMin
 
@@ -246,15 +260,18 @@ def selectionSort():
 
 	for i in range(1, elements.get()):
 		m = minIndex(i, elements.get())
+		elementColorCoding["indicated"] = -1
+		elementColorCoding["minOrMax"] = m
 
 		while m >= i and elementHeights[m] < elementHeights[m - 1]:
-			elementColorCoding["indicated"] = m - 1
+			elementColorCoding["minOrMax"] = m - 1
 			swap(m, m - 1)
 			m -= 1
+			lastSwap = m
 			swaps.set(swaps.get() + 1)
 			comparisons.set(comparisons.get() + 1)
 
-		elementColorCoding["sortedBorder"] = i - 1
+		elementColorCoding["sortedBorder"] = m
 
 	clockTime(start, time.time(), "SLC")
 
@@ -400,21 +417,31 @@ def quickSort(left, right):
 		clockTime(start, time.time(), "QCK")
 
 def cocktailSort():
+	elementColorCoding["sortedSide"] = "both"
+	elementColorCoding["sortedBorder"] = -1
+	elementColorCoding["sortedBorderAux"] = elements.get()
 	start = time.time()
 
 	for i in range(elements.get() // 2):
-		print(i)
 		localSwaps = 0
 
 		for j in range(i, elements.get () - i - 1):
+			elementColorCoding["indicated"] = j + 1
 			if elementHeights[j] > elementHeights[j + 1]:
 				swap(j, j + 1)
 				localSwaps += 1
+				lastSwap = j + 1
+
+		elementColorCoding["sortedBorderAux"] = lastSwap
 
 		for j in range(elements.get() - i - 1, i, -1):
+			elementColorCoding["indicated"] = j - 1
 			if elementHeights[j] < elementHeights[j - 1]:
 				swap(j, j - 1)
 				localSwaps += 1
+				lastSwap = j - 1
+
+		elementColorCoding["sortedBorder"] = lastSwap
 
 		if localSwaps == 0:
 			break
@@ -423,37 +450,62 @@ def cocktailSort():
 
 def maxIndex(firstIndex, lastIndex):
 	iMax = firstIndex
+	elementColorCoding["minOrMax"] = firstIndex
 
 	for i in range(firstIndex + 1, lastIndex):
-		if elementHeights[i] > elementHeights[iMax]:
+		if elementHeights[i] >= elementHeights[iMax]:
 			iMax = i
+			elementColorCoding["minOrMax"] = i
+			updateElements(0)
+			time.sleep(sleepTime.get() + sleepTimeFine.get() / 1000)
 
 	return iMax
 
 def doubleSelectionSort():
+	elementColorCoding["sortedSide"] = "both"
+	elementColorCoding["sortedBorder"] = -1
+	elementColorCoding["sortedBorderAux"] = elements.get()
 	start = time.time()
 
 	for i in range(elements.get() // 2):
 		m = minIndex(i, elements.get() - i)
+		elementColorCoding["indicated"] = -1
+		elementColorCoding["minOrMax"] = m
 
 		while m > i and elementHeights[m] < elementHeights[m - 1]:
+			elementColorCoding["minOrMax"] = m - 1
 			swap(m, m - 1)
 			m -= 1
+			lastSwap = m
+
+		elementColorCoding["sortedBorder"] = m
 
 		m = maxIndex(i + 1, elements.get() - i)
+		elementColorCoding["indicated"] = -1
+		elementColorCoding["minOrMax"] = m
 
 		while m < elements.get() - i - 1 and elementHeights[m] > elementHeights[m + 1]:
+			elementColorCoding["minOrMax"] = m + 1
 			swap(m, m + 1)
 			m += 1
+			lastSwap = m
+
+		elementColorCoding["sortedBorderAux"] = m
 
 	clockTime(start, time.time(), "DSLC")
 
 def unstableSelectionSort():
+	elementColorCoding["sortedSide"] = "left"
+	elementColorCoding["sortedBorder"] = -1
 	start = time.time()
 
 	for i in range(elements.get() - 1):
 		m = minIndex(i, elements.get())
-		swap(i, m)
+		elementColorCoding["minOrMax"] = m
+		if swap(i, m) is None:
+			elementColorCoding["sortedBorder"] = i
+		else:
+			elementColorCoding["sortedBorder"] = i - 1
 
 	clockTime(start, time.time(), "USLC")
 
