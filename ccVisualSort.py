@@ -100,6 +100,10 @@ def updateElements(strNewElements):
 		for i in range(elements.get()):
 			elementHeights.append(rnd.randint(1,elements.get()))
 		newElements = elements.get()
+		elementColorCoding["indicated"] = -1
+		elementColorCoding["minOrMax"] = -1
+		elementColorCoding["sortedBorder"] = -1
+		elementColorCoding["sortedSide"] = "none"
 	else:
 		elementHeights = list(range(1, newElements + 1))
 		elementColorCoding["indicated"] = -1
